@@ -69,6 +69,10 @@ internal static class Utility
 				{
 					onDataReceived( sender, e );
 				}
+				else
+				{
+					Log.Info( e.Data );
+				}
 			}
 		};
 

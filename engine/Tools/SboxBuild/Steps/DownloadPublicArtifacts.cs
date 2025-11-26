@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
 using System.Threading;
@@ -14,9 +13,9 @@ internal class DownloadPublicArtifacts( string name ) : Step( name )
 {
 	private const string BaseUrl = "https://artifacts.sbox.game";
 	private const int MaxParallelDownloads = 32;
+	private const int MaxDownloadAttempts = 3;
 	protected override ExitCode RunInternal()
 	{
-		var temporaryFiles = new ConcurrentBag<string>();
 		try
 		{
 			var commitHash = ResolveCommitHash();
@@ -49,7 +48,7 @@ internal class DownloadPublicArtifacts( string name ) : Step( name )
 			}
 
 			var repoRoot = Path.TrimEndingDirectorySeparator( Path.GetFullPath( Directory.GetCurrentDirectory() ) );
-			return DownloadArtifacts( httpClient, manifest, repoRoot, temporaryFiles );
+			return DownloadArtifacts( httpClient, manifest, repoRoot );
 		}
 		catch ( AggregateException ex )
 		{
@@ -65,43 +64,14 @@ internal class DownloadPublicArtifacts( string name ) : Step( name )
 			Log.Error( $"Public artifact download failed with error: {ex}" );
 			return ExitCode.Failure;
 		}
-		finally
-		{
-			CleanupTemporaryFiles( temporaryFiles );
-		}
 	}
 
-	private static ExitCode DownloadArtifacts( HttpClient httpClient, ArtifactManifest manifest, string repoRoot, ConcurrentBag<string> temporaryFiles )
+	private static ExitCode DownloadArtifacts( HttpClient httpClient, ArtifactManifest manifest, string repoRoot )
 	{
-		var downloadedArtifacts = new ConcurrentDictionary<string, string>( StringComparer.OrdinalIgnoreCase );
-		var artifactLocks = new ConcurrentDictionary<string, object>( StringComparer.OrdinalIgnoreCase );
 		var updatedCount = 0;
 		var skippedCount = 0;
+		var failedCount = 0;
 		var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = MaxParallelDownloads };
-
-		string EnsureArtifactCached( ArtifactFileInfo entry )
-		{
-			if ( downloadedArtifacts.TryGetValue( entry.Sha256, out var existing ) )
-			{
-				return existing;
-			}
-
-			var artifactLock = artifactLocks.GetOrAdd( entry.Sha256, _ => new object() );
-			lock ( artifactLock )
-			{
-				if ( downloadedArtifacts.TryGetValue( entry.Sha256, out existing ) )
-				{
-					return existing;
-				}
-
-				var tempPath = DownloadArtifact( httpClient, BaseUrl, entry )
-					?? throw new InvalidOperationException( $"Failed to download artifact {entry.Sha256}." );
-
-				temporaryFiles.Add( tempPath );
-				downloadedArtifacts[entry.Sha256] = tempPath;
-				return tempPath;
-			}
-		}
 
 		Parallel.ForEach( manifest.Files, parallelOptions, entry =>
 		{
@@ -120,45 +90,32 @@ internal class DownloadPublicArtifacts( string name ) : Step( name )
 				return;
 			}
 
-			var sourcePath = EnsureArtifactCached( entry );
-
 			var directory = Path.GetDirectoryName( destination );
 			if ( !string.IsNullOrEmpty( directory ) )
 			{
 				Directory.CreateDirectory( directory );
 			}
 
-			File.Copy( sourcePath, destination, true );
-
-			if ( !FileMatchesHash( destination, entry.Sha256 ) )
+			var dlSuccess = DownloadArtifact( httpClient, BaseUrl, entry, destination );
+			if ( dlSuccess )
 			{
-				throw new InvalidOperationException( $"Hash mismatch after writing {entry.Path}." );
+				Interlocked.Increment( ref updatedCount );
 			}
-
-			Log.Info( $"Wrote {entry.Path}" );
-			Interlocked.Increment( ref updatedCount );
+			else
+			{
+				Interlocked.Increment( ref failedCount );
+				DeleteIfExists( destination );
+			}
 		} );
+
+		if ( failedCount > 0 )
+		{
+			Log.Error( $"Artifact download failed for {failedCount} file(s)." );
+			return ExitCode.Failure;
+		}
 
 		Log.Info( $"Artifact download completed successfully. Updated {updatedCount} file(s), skipped {skippedCount}." );
 		return ExitCode.Success;
-	}
-
-	private static void CleanupTemporaryFiles( ConcurrentBag<string> temporaryFiles )
-	{
-		foreach ( var temp in temporaryFiles )
-		{
-			try
-			{
-				if ( File.Exists( temp ) )
-				{
-					File.Delete( temp );
-				}
-			}
-			catch ( Exception ex )
-			{
-				Log.Warning( $"Failed to clean up temporary file '{temp}': {ex.Message}" );
-			}
-		}
 	}
 
 	private static HttpClient CreateHttpClient()
@@ -236,7 +193,26 @@ internal class DownloadPublicArtifacts( string name ) : Step( name )
 		return manifest;
 	}
 
-	private static string DownloadArtifact( HttpClient httpClient, string baseUrl, ArtifactFileInfo entry )
+	private static bool DownloadArtifact( HttpClient httpClient, string baseUrl, ArtifactFileInfo entry, string destination )
+	{
+		for ( var attempt = 1; attempt <= MaxDownloadAttempts; attempt++ )
+		{
+			try
+			{
+				DownloadArtifactOnce( httpClient, baseUrl, entry, destination );
+				return true;
+			}
+			catch ( Exception ex )
+			{
+				Log.Warning( $"Download attempt {attempt} for {entry.Path ?? entry.Sha256} failed: {ex.Message}" );
+				Thread.Sleep( TimeSpan.FromMilliseconds( 200 * attempt ) );
+			}
+		}
+
+		return false;
+	}
+
+	private static void DownloadArtifactOnce( HttpClient httpClient, string baseUrl, ArtifactFileInfo entry, string destination )
 	{
 		var hash = entry.Sha256;
 		var expectedSize = entry.Size;
@@ -249,43 +225,54 @@ internal class DownloadPublicArtifacts( string name ) : Step( name )
 		if ( response.StatusCode == HttpStatusCode.NotFound )
 		{
 			Log.Error( $"Artifact blob {hash} not found." );
-			return null;
+			throw new InvalidOperationException( $"Artifact blob {hash} not found." );
 		}
 
 		if ( !response.IsSuccessStatusCode )
 		{
 			Log.Error( $"Failed to download artifact {hash} (HTTP {(int)response.StatusCode})." );
-			return null;
+			throw new InvalidOperationException( $"Failed to download artifact {hash} (HTTP {(int)response.StatusCode})." );
 		}
 
-		var tempPath = Path.Combine( Path.GetTempPath(), $"sbox-public-{hash}-{Guid.NewGuid():N}.bin" );
-
 		using ( var downloadStream = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult() )
-		using ( var fileStream = File.Open( tempPath, FileMode.Create, FileAccess.Write, FileShare.None ) )
+		using ( var fileStream = File.Open( destination, FileMode.Create, FileAccess.Write, FileShare.None ) )
 		{
 			downloadStream.CopyTo( fileStream );
 		}
 
 		if ( expectedSize > 0 )
 		{
-			var actualSize = new FileInfo( tempPath ).Length;
+			var actualSize = new FileInfo( destination ).Length;
 			if ( actualSize != expectedSize )
 			{
 				Log.Error( $"Downloaded artifact {hash} has size {actualSize}, expected {expectedSize}." );
-				File.Delete( tempPath );
-				return null;
+				File.Delete( destination );
+				throw new InvalidOperationException( $"Downloaded artifact {hash} has unexpected size." );
 			}
 		}
 
-		var downloadedHash = Utility.CalculateSha256( tempPath );
+		var downloadedHash = Utility.CalculateSha256( destination );
 		if ( !string.Equals( downloadedHash, hash, StringComparison.OrdinalIgnoreCase ) )
 		{
 			Log.Error( $"Hash mismatch for downloaded artifact {hash}." );
-			File.Delete( tempPath );
-			return null;
+			File.Delete( destination );
+			throw new InvalidOperationException( $"Hash mismatch for downloaded artifact {hash}." );
 		}
+	}
 
-		return tempPath;
+	private static void DeleteIfExists( string path )
+	{
+		try
+		{
+			if ( File.Exists( path ) )
+			{
+				File.Delete( path );
+			}
+		}
+		catch ( Exception ex )
+		{
+			Log.Warning( $"Failed to delete '{path}' during retry cleanup: {ex.Message}" );
+		}
 	}
 
 	private static bool FileMatchesHash( string path, string expectedHash )
