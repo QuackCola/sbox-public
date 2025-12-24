@@ -136,7 +136,7 @@ internal sealed class ShaderGlobalsList : ListView
 	}
 }
 
-internal sealed class ShaderGlobalTypeButton : Button
+file class ShaderGlobalTypeButton : Button
 {
 	private List<ShaderGlobalType> _globalTypes = new List<ShaderGlobalType>()
 	{
