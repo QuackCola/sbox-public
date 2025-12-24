@@ -1,21 +1,21 @@
 ﻿
 namespace Editor.ProjectSettingPages;
 
+public enum ShaderGlobalType
+{
+	Int,
+	Bool,
+	Float,
+	Vector2,
+	Vector3,
+	Vector4,
+	Color,
+	Texture
+}
+
 [Title( "Shader Globals" )]
 internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 {
-	public enum ShaderGlobalType
-	{
-		Int,
-		Bool,
-		Float,
-		Vector2,
-		Vector3,
-		Vector4,
-		Color,
-		Texture
-	}
-
 	LineEdit LineEdit;
 	ShaderGlobalsList ShaderGlobalsList;
 
@@ -83,9 +83,9 @@ internal sealed class ShaderGlobalsList : ListView
 
 	}
 
-	public void AddItem( ShaderGlobalsCategory.ShaderGlobalType globalType )
+	public void AddItem( ShaderGlobalType globalType )
 	{
-		if ( globalType == ShaderGlobalsCategory.ShaderGlobalType.Bool )
+		if ( globalType == ShaderGlobalType.Bool )
 		{
 			AddItem( new ShaderGlobal( "MyGlobalBool", false  ) );
 		}
@@ -138,20 +138,20 @@ internal sealed class ShaderGlobalsList : ListView
 
 internal sealed class ShaderGlobalTypeButton : Button
 {
-	private List<ShaderGlobalsCategory.ShaderGlobalType> _globalTypes = new List<ShaderGlobalsCategory.ShaderGlobalType>()
+	private List<ShaderGlobalType> _globalTypes = new List<ShaderGlobalType>()
 	{
-		ShaderGlobalsCategory.ShaderGlobalType.Int,
-		ShaderGlobalsCategory.ShaderGlobalType.Bool,
-		ShaderGlobalsCategory.ShaderGlobalType.Float,
-		ShaderGlobalsCategory.ShaderGlobalType.Vector2,
-		ShaderGlobalsCategory.ShaderGlobalType.Vector3,
-		ShaderGlobalsCategory.ShaderGlobalType.Vector4,
-		ShaderGlobalsCategory.ShaderGlobalType.Color,
-		ShaderGlobalsCategory.ShaderGlobalType.Texture
+		ShaderGlobalType.Int,
+		ShaderGlobalType.Bool,
+		ShaderGlobalType.Float,
+		ShaderGlobalType.Vector2,
+		ShaderGlobalType.Vector3,
+		ShaderGlobalType.Vector4,
+		ShaderGlobalType.Color,
+		ShaderGlobalType.Texture
 	};
 
-	private ShaderGlobalsCategory.ShaderGlobalType _currentType;
-	public ShaderGlobalsCategory.ShaderGlobalType CurrentType
+	private ShaderGlobalType _currentType;
+	public ShaderGlobalType CurrentType
 	{
 		get => _currentType;
 		set
@@ -162,9 +162,9 @@ internal sealed class ShaderGlobalTypeButton : Button
 		}
 	}
 
-	public Action<ShaderGlobalsCategory.ShaderGlobalType> OnGlobalTypeChosen { get; set; }
+	public Action<ShaderGlobalType> OnGlobalTypeChosen { get; set; }
 
-	public ShaderGlobalTypeButton( ShaderGlobalsCategory.ShaderGlobalType globalType ) : base( null )
+	public ShaderGlobalTypeButton( ShaderGlobalType globalType ) : base( null )
 	{
 		SetStyles( $"padding-left: 32px; padding-right: 32px; font-family: '{Theme.DefaultFont}'; padding-top: 6px; padding-bottom: 6px;" );
 		
