@@ -53,14 +53,16 @@ internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 		
 		header.Add( addButton );
 		
-		ShaderGlobalsList = new( null );
+		ShaderGlobalsList = new ShaderGlobalsList( null, Settings );
 		
 		BodyLayout.Add( ShaderGlobalsList );
+
+		BodyLayout.AddStretchCell( 2 );
 	}
 
 	private void AddGlobal()
 	{
-		ShaderGlobalsList.AddItem( CurrentGlobalType );
+		// TODO
 	}
 
 	public override void OnSave()
@@ -71,61 +73,75 @@ internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 	}
 }
 
-internal sealed class ShaderGlobalsList : ListView
+
+internal sealed class ShaderGlobalsList : Widget
 {
-	public ShaderGlobalsList( Widget parent = null ) : base( parent )
-	{
-		Margin = 6;
-		ItemSpacing = 4;
-		ItemSize = new Vector2( 0, 24 );
-		AcceptDrops = false;
+	Layout Content;
+	ScrollArea ScrollArea;
+	
+	List<ShaderGlobalEntry> ShaderGlobalEntries;
+	ShaderGlobalsSettings Settings;
 
+	public Action<ShaderGlobal> OnGlobalUpdated { get; set; }
+
+	public ShaderGlobalsList( Widget parent, ShaderGlobalsSettings settings ) : base( parent, false )
+	{
+		Layout = Layout.Column();
+		Layout.Margin = 16;
+		Layout.Spacing = 8;
+
+		Settings = settings;
+		ShaderGlobalEntries = new List<ShaderGlobalEntry>();
+
+		Layout.AddStretchCell();
+
+		{
+			ScrollArea = new ScrollArea( this );
+			ScrollArea.Canvas = new Widget();
+			ScrollArea.Canvas.Layout = Layout.Column();
+			ScrollArea.Canvas.VerticalSizeMode = SizeMode.CanGrow;
+			ScrollArea.Canvas.HorizontalSizeMode = SizeMode.Default;
+
+			Content = Layout.Column();
+			Content.Margin = 4;
+			Content.AddStretchCell();
+
+			ScrollArea.Canvas.Layout.Add( Content );
+			ScrollArea.Canvas.Layout.AddStretchCell();
+
+			Layout.Add( ScrollArea );
+		}
+
+		UpdateList();
 
 	}
 
-	public void AddItem( ShaderGlobalType globalType )
+	private void UpdateList()
 	{
-		if ( globalType == ShaderGlobalType.Bool )
+		Content?.Clear( true );
+		ShaderGlobalEntries.Clear();
+
+		if ( Settings.ShaderGlobals.Any() )
 		{
-			AddItem( new ShaderGlobal( "MyGlobalBool", false  ) );
+			foreach ( var global in Settings.ShaderGlobals )
+			{
+				var globalEntry = Content.Add( new ShaderGlobalEntry( this, global ) );
+
+				globalEntry.OnGlobalUpdated += var =>
+				{
+					OnGlobalUpdated?.Invoke( var );
+				};
+
+				ShaderGlobalEntries.Add( globalEntry );
+			}
+		}
+		else
+		{
+			var globalEntry = Content.Add( new ShaderGlobalEntry( this, new ShaderGlobal( "MyGlobal1", new Vector3() ) ) );
+
+			ShaderGlobalEntries.Add( globalEntry );
 		}
 	}
-
-	protected override void PaintItem( VirtualWidget item )
-	{
-		var shaderGlobal = item.Object;
-		var rect = item.Rect;
-		var textColor = Theme.TextControl;
-		var itemColor = Theme.ControlBackground;
-		var typeColor = Color.White;
-
-		if ( item.Hovered )
-		{
-			textColor = Color.White;
-			itemColor = Theme.Primary.Lighten( 0.1f ).Desaturate( 0.3f ).WithAlpha( 0.4f * 0.6f );
-		}
-		if ( item.Selected )
-		{
-			textColor = Theme.TextControl;
-			itemColor = Theme.Primary;
-		}
-
-		Paint.ClearPen();
-		Paint.SetBrush( itemColor );
-		Paint.DrawRect( rect, Theme.ControlRadius );
-
-		var iconRect = rect.Shrink( 4, 0, 0, 0 );
-		Paint.SetPen( typeColor );
-		Paint.DrawIcon( iconRect, "circle", 12f, TextFlag.LeftCenter );
-		rect.Left += 24f;
-
-		Paint.SetPen( textColor.WithAlpha( 0.7f ) );
-		Paint.SetBrush( textColor.WithAlpha( 0.7f ) );
-
-		Paint.DrawText( rect.Shrink( 4, 0, 0, 0 ), $"Some Global", TextFlag.LeftCenter );
-		Paint.DrawText( rect.Shrink( 0, 0, 4, 0 ), $"{DisplayInfo.ForType( shaderGlobal.GetType() ).Name}", TextFlag.RightCenter );
-	}
-
 	protected override void OnPaint()
 	{
 		Paint.ClearPen();
@@ -133,6 +149,57 @@ internal sealed class ShaderGlobalsList : ListView
 		Paint.DrawRect( LocalRect, 4 );
 
 		base.OnPaint();
+	}
+
+	class ShaderGlobalEntry : Widget
+	{
+		ControlSheet ControlSheet;
+		Layout ButtonLayout;
+		Drag dragData;
+		ShaderGlobalsList ParentList;
+
+		SerializedObject SerializedObject;
+
+		public ShaderGlobal ShaderGlobal { get; }
+		
+		public Action<ShaderGlobal> OnGlobalUpdated { get; set; }
+
+		public ShaderGlobalEntry( ShaderGlobalsList parentList, ShaderGlobal shaderGlobal )
+		{
+			Layout = Layout.Row();
+			ControlSheet = new ControlSheet();
+			ButtonLayout = Layout.Row();
+			MaximumHeight = 200;
+			IsDraggable = true;
+			ParentList = parentList;
+			ShaderGlobal = shaderGlobal;
+			SerializedObject = shaderGlobal.GetSerialized();
+
+			if ( SerializedObject is null )
+				return;
+
+			SerializedObject.OnPropertyFinishEdit += x =>
+			{
+				if ( x.Name == "Name" )
+				{
+					var updatedVarName = x.GetValue<string>();
+
+					x.SetValue( $"{updatedVarName}" );
+				}
+
+				OnGlobalUpdated?.Invoke( ShaderGlobal );
+			};
+
+			ControlSheet.AddObject( SerializedObject );
+
+			Layout.Add( ControlSheet );
+		}
+
+		protected override void OnPaint()
+		{
+
+			base.OnPaint();
+		}
 	}
 }
 
