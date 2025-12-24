@@ -4,7 +4,6 @@ namespace Editor.ProjectSettingPages;
 [Title( "Shader Globals" )]
 internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 {
-	Button.Danger DeleteButton;
 	public enum ShaderGlobalType
 	{
 		Int,
@@ -22,6 +21,8 @@ internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 
 	ShaderGlobalsSettings Settings;
 
+	ShaderGlobalType CurrentGlobalType;
+
 	public override void OnInit( Project project )
 	{
 		base.OnInit( project );
@@ -29,38 +30,37 @@ internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 		Settings = EditorUtility.LoadProjectSettings<ShaderGlobalsSettings>( "ShaderGlobals.config" );
 
 		var header = BodyLayout.AddRow( 0, false );
-		BodyLayout.Spacing = 8;
-		BodyLayout.Spacing = 4;
-
-		BodyLayout.Add( header );
+		header.Spacing = 4;
 
 		LineEdit = new LineEdit() { PlaceholderText = "Add New Shader Global..." };
-
+		
 		header.Add( LineEdit );
-
-		DeleteButton = new Button.Danger( "Delete", "delete" );
-		DeleteButton.Enabled = false;
-		DeleteButton.ToolTip = $"Delete selected shader global";
-		DeleteButton.Clicked += () =>
+		
+		var globalTypeButton = new ShaderGlobalTypeButton( ShaderGlobalType.Float );
+		globalTypeButton.OnGlobalTypeChosen += ( globalType ) =>
 		{
-			// TODO
+			CurrentGlobalType = globalType;
 		};
-
-		header.Add( DeleteButton );
-
+		globalTypeButton.FixedHeight = Theme.ControlHeight;
+		
+		header.Add( globalTypeButton );
+		
 		var addButton = new Button.Primary( "Add", "new_label" );
 		addButton.Enabled = true;
 		addButton.ToolTip = $"Add new shader global";
-		addButton.Clicked += () =>
-		{
-			// TODO
-		};
-
+		addButton.Clicked += AddGlobal;
+		addButton.FixedHeight = Theme.ControlHeight;
+		
 		header.Add( addButton );
 		
 		ShaderGlobalsList = new( null );
-
+		
 		BodyLayout.Add( ShaderGlobalsList );
+	}
+
+	private void AddGlobal()
+	{
+		ShaderGlobalsList.AddItem( CurrentGlobalType );
 	}
 
 	public override void OnSave()
@@ -79,6 +79,16 @@ internal sealed class ShaderGlobalsList : ListView
 		ItemSpacing = 4;
 		ItemSize = new Vector2( 0, 24 );
 		AcceptDrops = false;
+
+
+	}
+
+	public void AddItem( ShaderGlobalsCategory.ShaderGlobalType globalType )
+	{
+		if ( globalType == ShaderGlobalsCategory.ShaderGlobalType.Bool )
+		{
+			AddItem( new ShaderGlobal( "MyGlobalBool", false  ) );
+		}
 	}
 
 	protected override void PaintItem( VirtualWidget item )
@@ -128,20 +138,20 @@ internal sealed class ShaderGlobalsList : ListView
 
 internal sealed class ShaderGlobalTypeButton : Button
 {
-	private List<ShaderGlobalType> _globalTypes = new List<ShaderGlobalType>()
+	private List<ShaderGlobalsCategory.ShaderGlobalType> _globalTypes = new List<ShaderGlobalsCategory.ShaderGlobalType>()
 	{
-		ShaderGlobalType.Int,
-		ShaderGlobalType.Bool,
-		ShaderGlobalType.Float,
-		ShaderGlobalType.Vector2,
-		ShaderGlobalType.Vector3,
-		ShaderGlobalType.Vector4,
-		ShaderGlobalType.Color,
-		ShaderGlobalType.Texture
+		ShaderGlobalsCategory.ShaderGlobalType.Int,
+		ShaderGlobalsCategory.ShaderGlobalType.Bool,
+		ShaderGlobalsCategory.ShaderGlobalType.Float,
+		ShaderGlobalsCategory.ShaderGlobalType.Vector2,
+		ShaderGlobalsCategory.ShaderGlobalType.Vector3,
+		ShaderGlobalsCategory.ShaderGlobalType.Vector4,
+		ShaderGlobalsCategory.ShaderGlobalType.Color,
+		ShaderGlobalsCategory.ShaderGlobalType.Texture
 	};
 
-	private ShaderGlobalType _currentType;
-	public ShaderGlobalType CurrentType
+	private ShaderGlobalsCategory.ShaderGlobalType _currentType;
+	public ShaderGlobalsCategory.ShaderGlobalType CurrentType
 	{
 		get => _currentType;
 		set
@@ -152,9 +162,9 @@ internal sealed class ShaderGlobalTypeButton : Button
 		}
 	}
 
-	public Action<ShaderGlobalType> OnGlobalTypeChosen { get; set; }
+	public Action<ShaderGlobalsCategory.ShaderGlobalType> OnGlobalTypeChosen { get; set; }
 
-	public ShaderGlobalTypeButton( ShaderGlobalType globalType ) : base( null )
+	public ShaderGlobalTypeButton( ShaderGlobalsCategory.ShaderGlobalType globalType ) : base( null )
 	{
 		SetStyles( $"padding-left: 32px; padding-right: 32px; font-family: '{Theme.DefaultFont}'; padding-top: 6px; padding-bottom: 6px;" );
 		
