@@ -115,6 +115,8 @@ internal sealed class ProjectInspector : InspectorWidget
 
 			AddCategory<CompilerCategory>( "Compiler", "code" );
 
+			AddCategory<ShaderGlobalsCategory>( "Shader Globals", "public" );
+
 			AddCategory<ResourcesCategory>( "Other", "tune" );
 			AddCategory<ReferencesCategory>( "Other" );
 			AddCategory<CursorCategory>( "Other" );
