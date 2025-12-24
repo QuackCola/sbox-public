@@ -73,7 +73,6 @@ internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 	}
 }
 
-
 internal sealed class ShaderGlobalsList : Widget
 {
 	Layout Content;
