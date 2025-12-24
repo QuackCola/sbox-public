@@ -5,6 +5,18 @@ namespace Editor.ProjectSettingPages;
 internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 {
 	Button.Danger DeleteButton;
+	public enum ShaderGlobalType
+	{
+		Int,
+		Bool,
+		Float,
+		Vector2,
+		Vector3,
+		Vector4,
+		Color,
+		Texture
+	}
+
 	LineEdit LineEdit;
 	ShaderGlobalsList ShaderGlobalsList;
 
@@ -111,5 +123,100 @@ internal sealed class ShaderGlobalsList : ListView
 		Paint.DrawRect( LocalRect, 4 );
 
 		base.OnPaint();
+	}
+}
+
+internal sealed class ShaderGlobalTypeButton : Button
+{
+	private List<ShaderGlobalType> _globalTypes = new List<ShaderGlobalType>()
+	{
+		ShaderGlobalType.Int,
+		ShaderGlobalType.Bool,
+		ShaderGlobalType.Float,
+		ShaderGlobalType.Vector2,
+		ShaderGlobalType.Vector3,
+		ShaderGlobalType.Vector4,
+		ShaderGlobalType.Color,
+		ShaderGlobalType.Texture
+	};
+
+	private ShaderGlobalType _currentType;
+	public ShaderGlobalType CurrentType
+	{
+		get => _currentType;
+		set
+		{
+			_currentType = value;
+
+			OnGlobalTypeChosen?.Invoke( value );
+		}
+	}
+
+	public Action<ShaderGlobalType> OnGlobalTypeChosen { get; set; }
+
+	public ShaderGlobalTypeButton( ShaderGlobalType globalType ) : base( null )
+	{
+		SetStyles( $"padding-left: 32px; padding-right: 32px; font-family: '{Theme.DefaultFont}'; padding-top: 6px; padding-bottom: 6px;" );
+		
+		FixedWidth = 128;
+		FixedHeight = Theme.RowHeight + 6;
+
+		_currentType = globalType;
+
+		UpdateButtonText();
+
+		Clicked = Click;
+	}
+
+
+	private void UpdateButtonText()
+	{
+		Text = _currentType.ToString();
+		//Icon = "";
+	}
+
+	private void Click()
+	{
+		var menu = new ContextMenu();
+
+		foreach ( var globalType in _globalTypes )
+		{
+			var option = new Option();
+			option.Text = globalType.ToString();
+			//option.Icon = "";
+			option.Triggered = () =>
+			{
+				_currentType = globalType;
+				UpdateButtonText();
+				OnGlobalTypeChosen?.Invoke( globalType );
+			};
+
+			menu.AddOption( option );
+		}
+
+		menu.OpenAt( ScreenRect.BottomLeft, false );
+	}
+
+	//[EditorEvent.Frame]
+	//public void Frame()
+	//{
+	//	UpdateButtonText();
+	//}
+
+	protected override void OnPaint()
+	{
+		Paint.Antialiasing = true;
+		Paint.ClearPen();
+		Paint.SetBrush( Theme.ControlBackground );
+		Paint.DrawRect( LocalRect, Theme.ControlRadius );
+
+		var fg = Theme.Text;
+
+		Paint.SetDefaultFont();
+		Paint.SetPen( fg.WithAlphaMultiplied( Paint.HasMouseOver ? 1.0f : 0.9f ) );
+		Paint.DrawIcon( LocalRect.Shrink( 8, 0, 0, 0 ), Icon, 14, TextFlag.LeftCenter );
+		Paint.DrawText( LocalRect.Shrink( 32, 0, 0, 0 ), Text, TextFlag.LeftCenter );
+
+		Paint.DrawIcon( LocalRect.Shrink( 4, 0 ), "arrow_drop_down", 18, TextFlag.RightCenter );
 	}
 }
