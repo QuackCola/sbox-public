@@ -135,13 +135,8 @@ internal sealed class ShaderGlobalsList : Widget
 				ShaderGlobalEntries.Add( globalEntry );
 			}
 		}
-		else
-		{
-			var globalEntry = Content.Add( new ShaderGlobalEntry( this, new ShaderGlobal( "MyGlobal1", new Vector3() ) ) );
-
-			ShaderGlobalEntries.Add( globalEntry );
-		}
 	}
+
 	protected override void OnPaint()
 	{
 		Paint.ClearPen();
