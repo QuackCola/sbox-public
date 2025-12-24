@@ -8,9 +8,13 @@ internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 	LineEdit LineEdit;
 	ShaderGlobalsList ShaderGlobalsList;
 
+	ShaderGlobalsSettings Settings;
+
 	public override void OnInit( Project project )
 	{
 		base.OnInit( project );
+
+		Settings = EditorUtility.LoadProjectSettings<ShaderGlobalsSettings>( "ShaderGlobals.config" );
 
 		var header = BodyLayout.AddRow( 0, false );
 		BodyLayout.Spacing = 8;
@@ -49,6 +53,8 @@ internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 
 	public override void OnSave()
 	{
+		EditorUtility.SaveProjectSettings( Settings, "ShaderGlobals.config" );
+
 		base.OnSave();
 	}
 }
