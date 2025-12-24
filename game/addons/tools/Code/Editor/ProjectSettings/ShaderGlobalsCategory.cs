@@ -59,7 +59,7 @@ internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 	}
 }
 
-internal class ShaderGlobalsList : ListView
+internal sealed class ShaderGlobalsList : ListView
 {
 
 	public ShaderGlobalsList( Widget parent = null ) : base( parent )
