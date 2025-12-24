@@ -61,7 +61,6 @@ internal sealed class ShaderGlobalsCategory : ProjectInspector.Category
 
 internal sealed class ShaderGlobalsList : ListView
 {
-
 	public ShaderGlobalsList( Widget parent = null ) : base( parent )
 	{
 		Margin = 6;
@@ -72,7 +71,7 @@ internal sealed class ShaderGlobalsList : ListView
 
 	protected override void PaintItem( VirtualWidget item )
 	{
-		var variable = item.Object;
+		var shaderGlobal = item.Object;
 		var rect = item.Rect;
 		var textColor = Theme.TextControl;
 		var itemColor = Theme.ControlBackground;
@@ -101,14 +100,9 @@ internal sealed class ShaderGlobalsList : ListView
 		Paint.SetPen( textColor.WithAlpha( 0.7f ) );
 		Paint.SetBrush( textColor.WithAlpha( 0.7f ) );
 
-		var textRect = Paint.DrawText( rect.Shrink( 4, 0, 0, 0 ), $"Some Variable", TextFlag.LeftCenter );
-		var typeRect = Paint.DrawText( rect.Shrink( 0, 0, 4, 0 ), $"{DisplayInfo.ForType( variable.GetType() ).Name}", TextFlag.RightCenter );
-
-		//Paint.SetPen( Color.Gray.WithAlpha( 0.25f ) );
-		//Paint.SetBrush( Color.Gray.WithAlpha( 0.25f ) );
-		//Paint.DrawRect( typeRect.Grow( 2 ), Theme.ControlRadius );
+		Paint.DrawText( rect.Shrink( 4, 0, 0, 0 ), $"Some Global", TextFlag.LeftCenter );
+		Paint.DrawText( rect.Shrink( 0, 0, 4, 0 ), $"{DisplayInfo.ForType( shaderGlobal.GetType() ).Name}", TextFlag.RightCenter );
 	}
-
 
 	protected override void OnPaint()
 	{
