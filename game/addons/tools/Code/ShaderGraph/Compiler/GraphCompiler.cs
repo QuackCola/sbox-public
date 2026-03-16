@@ -711,8 +711,6 @@ public sealed partial class GraphCompiler
 			}
 		}
 
-
-
 		return value;
 	}
 
@@ -756,7 +754,6 @@ public sealed partial class GraphCompiler
 					SubgraphStack.Add( lastStack );
 					Subgraph = lastSubgraph;
 					SubgraphNode = lastNode;
-
 
 					var inputNodeInputType = parentInput.Value.inputNode.InputType;
 					if ( inputNodeInputType == InputType.Texture2D || inputNodeInputType == InputType.TextureCube )

@@ -27,7 +27,6 @@ public class MainWindowShader : MainWindow, IAssetEditor
 	}
 }
 
-
 public class MainWindow : DockWindow
 {
 	public virtual bool IsSubgraph => false;
@@ -1266,10 +1265,6 @@ public class MainWindow : DockWindow
 		foreach ( var type in blackboardParameterTypes )
 		{
 			_graphView.AddParameterType( type );
-		}
-
-		foreach ( var type in blackboardParameterTypes )
-		{
 			_blackboardView.AddParameterType( type );
 		}
 

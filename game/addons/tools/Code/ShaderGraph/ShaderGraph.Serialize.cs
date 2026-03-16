@@ -347,7 +347,7 @@ partial class ShaderGraph
 
 					if ( string.IsNullOrWhiteSpace( parameter.Name ) )
 					{
-						var name = "Parameter";
+						var name = $"{(IsSubgraph ? "SubgraphInput" : "MaterialParameter")}";
 						var id = name;
 						int count = 0;
 

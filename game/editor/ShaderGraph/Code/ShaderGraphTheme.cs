@@ -22,7 +22,7 @@ internal static class ShaderGraphTheme
 			{ typeof( Vector3 ), new HandleConfig( "Vector3", Color.Parse( "#7177e1" )!.Value ) },
 			{ typeof( Vector4 ), new HandleConfig( "Vector4", Color.Parse( "#c7ae32" )!.Value ) },
 			{ typeof( Color ), new HandleConfig( "Color", Color.Parse( "#c7ae32" )!.Value ) },
-			{ typeof( Texture ), new HandleConfig( "Texture2D", Color.Parse( "#ffb3a7" )!.Value ) },
+			{ typeof( Texture ), new HandleConfig( "Texture", Color.Parse( "#ffb3a7" )!.Value ) },
 			{ typeof( Sampler ), new HandleConfig( "Sampler", Color.Parse( "#dddddd" )!.Value ) },
 			{ typeof( Gradient ), new HandleConfig( "Gradient", Color.Parse( "#dddddd" )!.Value ) },
 
