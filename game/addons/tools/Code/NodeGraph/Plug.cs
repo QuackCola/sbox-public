@@ -22,6 +22,7 @@ public abstract class Plug : GraphicsItem
 	}
 
 	public bool Visible { get; set; }
+	public bool StronglyTyped { get; set; }
 	public bool Dragging { get; protected set; }
 
 	public abstract bool IsConnected { get; }
@@ -38,6 +39,7 @@ public abstract class Plug : GraphicsItem
 		Size = new Vector2( 24, 24 );
 		Node = node;
 		Inner = plug;
+		StronglyTyped = plug.IsStronglyTyped;
 		Visible = true;
 		HoverEvents = node is not RerouteUI;
 

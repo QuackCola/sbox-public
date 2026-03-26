@@ -33,6 +33,8 @@ public abstract class ActionPlug<T> : IActionPlug where T : Node.IParameter
 
 	INode IPlug.Node => Node;
 
+	bool IPlug.IsStronglyTyped => false;
+
 	public string Identifier { get; }
 
 	public virtual Type Type => Parameter.Type;

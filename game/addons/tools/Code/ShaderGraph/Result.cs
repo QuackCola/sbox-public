@@ -117,7 +117,7 @@ public sealed class Result : BaseResult
 				}
 				var propertyInfo = typeof( Result ).GetProperty( property.Name );
 				if ( propertyInfo is null ) continue;
-				var info = new PlugInfo( propertyInfo );
+				var info = new PlugInfo( propertyInfo, false );
 				var displayInfo = info.DisplayInfo;
 				displayInfo.Name = property.DisplayName;
 				info.DisplayInfo = displayInfo;

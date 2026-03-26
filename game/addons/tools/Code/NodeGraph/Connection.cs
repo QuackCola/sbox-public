@@ -11,6 +11,7 @@ public class Connection : GraphicsLine
 	public Color ColorTint { get; set; }
 
 	private bool _dragging;
+	private bool _typeConversionError;
 
 	public HandleConfig Config => Output.IsValid() ? Output.HandleConfig : Input.HandleConfig;
 	public ConnectionStyle ConnectionStyle => (GraphicsView as GraphView)?.ConnectionStyle ?? ConnectionStyle.Default;
@@ -30,7 +31,7 @@ public class Connection : GraphicsLine
 	/// </summary>
 	public object StyleData { get; set; }
 
-	public Connection( PlugOut output, PlugIn input )
+	public Connection( PlugOut output, PlugIn input, bool typeError = false )
 	{
 		ZIndex = -10;
 		HoverEvents = true;
@@ -42,13 +43,17 @@ public class Connection : GraphicsLine
 		output.AddConnectionInternal( this );
 
 		Cursor = CursorShape.Finger;
+
+		_typeConversionError = typeError;
 	}
 
-	public Connection( Plug source )
+	public Connection( Plug source, bool typeError = false )
 	{
 		Input = source as PlugIn;
 		Output = source as PlugOut;
 		ZIndex = -10;
+
+		_typeConversionError = typeError;
 	}
 
 	internal void UpdateSceneBounds( Rect sceneRect )
@@ -82,13 +87,31 @@ public class Connection : GraphicsLine
 			width = 6.0f;
 		}
 
-		Paint.SetPen( color, width * WidthScale );
-
+		Paint.SetPen( _typeConversionError ? Color.Red.Darken( 0.4f ) : color, width * WidthScale );
+		
 		PaintLine();
+
+		if ( _typeConversionError )
+		{
+			var errorColor = Color.Red.Darken( 0.5f );
+			var iconRect = new Rect( BoundingRect.Center, 24 );
+
+			Paint.SetPen( errorColor );
+			Paint.SetBrush( errorColor );
+	
+			Paint.DrawRect( iconRect, Theme.ControlRadius );
+
+			Paint.ClearBrush();
+			Paint.SetPen( Color.White );
+
+			Paint.DrawIcon( iconRect, "warning", 20 );
+		}
 	}
 
 	internal void LayoutForPreview( Plug plug, Vector2 scenePosition, Plug dropTarget )
 	{
+		_typeConversionError = dropTarget != null && dropTarget.StronglyTyped && plug.PropertyType != dropTarget.PropertyType;
+
 		Output = plug as PlugOut ?? dropTarget as PlugOut;
 		Input = plug as PlugIn ?? dropTarget as PlugIn;
 
@@ -169,6 +192,12 @@ public class Connection : GraphicsLine
 			ToolTip = $"<span style=\"white-space: nowrap;\">{Output.Inner.Type.ToRichText()}<br/>" +
 				$"<b>From</b>: {Output.Node.Node.DisplayInfo.Name} \u2192 {Output.Inner.DisplayInfo.Name.WithColor( "#9CDCFE" )}<br/>" +
 				$"<b>To</b>: {Input.Node.Node.DisplayInfo.Name} \u2192 {Input.Inner.DisplayInfo.Name.WithColor( "#9CDCFE" )}</span>";
+		
+			if ( _typeConversionError )
+			{
+				ToolTip += $"<br/><span style=\"font-size: 11px; color: {Theme.Red.Hex};\">Conversion not supported:</span>";
+				ToolTip += $"<br/><span style=\"font-size: 11px; color: {Theme.Red.Hex};\">{Output.PropertyType} \u2192 {Input.PropertyType}</span>";
+			}
 		}
 
 		UpdateZIndex();

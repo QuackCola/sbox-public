@@ -1000,7 +1000,7 @@ public class GraphView : GraphicsView, IGridSizeView
 
 		if ( !Preview.IsValid() )
 		{
-			Preview = new Connection( plug );
+			Preview = new Connection( plug, dropTarget != null && dropTarget.StronglyTyped && plug.PropertyType != dropTarget.PropertyType );
 			Add( Preview );
 		}
 
@@ -1100,7 +1100,7 @@ public class GraphView : GraphicsView, IGridSizeView
 			return null;
 		}
 
-		var connection = new Connection( nodeOutput, dropTarget );
+		var connection = new Connection( nodeOutput, dropTarget, dropTarget != null && dropTarget.StronglyTyped && nodeOutput.PropertyType != dropTarget.PropertyType );
 		Add( connection );
 
 		connection.Layout();

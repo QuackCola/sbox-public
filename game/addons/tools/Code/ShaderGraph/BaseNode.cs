@@ -121,10 +121,12 @@ public abstract class BaseNode : INode
 	public class InputAttribute : Attribute
 	{
 		public System.Type Type;
+		public bool StronglyTyped;
 
-		public InputAttribute( Type type = null )
+		public InputAttribute( Type type = null, bool stronglyTyped = false )
 		{
 			Type = type;
+			StronglyTyped = stronglyTyped;
 		}
 	}
 
@@ -187,12 +189,12 @@ public abstract class BaseNode : INode
 		{
 			if ( propertyInfo.GetCustomAttribute<InputAttribute>() is { } inputAttrib )
 			{
-				inputs.Add( new BasePlugIn( node, new( propertyInfo ), inputAttrib.Type ?? typeof( object ) ) );
+				inputs.Add( new BasePlugIn( node, new( propertyInfo, inputAttrib.StronglyTyped ), inputAttrib.Type ?? typeof( object ) ) );
 			}
 
 			if ( propertyInfo.GetCustomAttribute<OutputAttribute>() is { } outputAttrib )
 			{
-				outputs.Add( new BasePlugOut( node, new( propertyInfo ), outputAttrib.Type ?? typeof( object ) ) );
+				outputs.Add( new BasePlugOut( node, new( propertyInfo, false ), outputAttrib.Type ?? typeof( object ) ) );
 			}
 		}
 
@@ -214,6 +216,7 @@ public abstract class BaseNode : INode
 public record BasePlug( BaseNode Node, PlugInfo Info, Type Type ) : IPlug
 {
 	INode IPlug.Node => Node;
+	bool IPlug.IsStronglyTyped => Info.StronglyTyped;
 
 	public string Identifier => Info.Name;
 	public DisplayInfo DisplayInfo => Info.DisplayInfo;
@@ -352,6 +355,7 @@ public class PlugInfo
 	public Guid Id { get; set; }
 	public string Name { get; set; }
 	public Type Type { get; set; }
+	public bool StronglyTyped { get; set; }
 	public DisplayInfo DisplayInfo { get; set; }
 	public PropertyInfo Property { get; set; } = null;
 	public IPlugOut ConnectedPlug { get; set; } = null;
@@ -360,10 +364,11 @@ public class PlugInfo
 	{
 		DisplayInfo = new();
 	}
-	public PlugInfo( PropertyInfo property )
+	public PlugInfo( PropertyInfo property, bool stronglyTyped = false )
 	{
 		Name = property.Name;
 		Type = property.PropertyType;
+		StronglyTyped = stronglyTyped;
 		var info = DisplayInfo.ForMember( Type );
 		info.Name = property.Name;
 		var titleAttr = property.GetCustomAttribute<TitleAttribute>();

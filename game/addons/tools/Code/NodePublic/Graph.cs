@@ -124,6 +124,7 @@ public interface IPlug
 	bool ShowConnection { get; }
 	bool InTitleBar { get; }
 	bool IsReachable { get; }
+	bool IsStronglyTyped { get; }
 
 	string ErrorMessage { get; }
 }
