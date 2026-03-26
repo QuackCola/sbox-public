@@ -31,7 +31,7 @@ public class Connection : GraphicsLine
 	/// </summary>
 	public object StyleData { get; set; }
 
-	public Connection( PlugOut output, PlugIn input, bool typeError = false )
+	public Connection( PlugOut output, PlugIn input, bool typeConversionError = false )
 	{
 		ZIndex = -10;
 		HoverEvents = true;
@@ -44,16 +44,16 @@ public class Connection : GraphicsLine
 
 		Cursor = CursorShape.Finger;
 
-		_typeConversionError = typeError;
+		_typeConversionError = typeConversionError;
 	}
 
-	public Connection( Plug source, bool typeError = false )
+	public Connection( Plug source, bool typeConversionError = false )
 	{
 		Input = source as PlugIn;
 		Output = source as PlugOut;
 		ZIndex = -10;
 
-		_typeConversionError = typeError;
+		_typeConversionError = typeConversionError;
 	}
 
 	internal void UpdateSceneBounds( Rect sceneRect )
