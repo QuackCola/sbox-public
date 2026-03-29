@@ -284,15 +284,16 @@ public class AppSystem
 			_appSystem = default;
 		}
 
+		// Shut down error reporting last before unloading native DLLs,
+		// so crashpad stops monitoring. Any crash before this point
+		// during shutdown will still be properly reported.
+		NativeErrorReporter.Shutdown();
+
 		if ( steamApiDll != IntPtr.Zero )
 		{
 			NativeLibrary.Free( steamApiDll );
 			steamApiDll = default;
 		}
-		// Shut down error reporting last before unloading native DLLs,
-		// so crashpad stops monitoring. Any crash before this point
-		// during shutdown will still be properly reported.
-		NativeErrorReporter.Shutdown();
 
 		// Unload native dlls:
 		// At this point we should no longer need them.
