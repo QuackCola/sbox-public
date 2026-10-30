@@ -203,13 +203,25 @@ public partial class PanelDockWindow : Panel
 		base.OnDeleted();
 	}
 
-	// TODO
 	protected Sandbox.UI.Label WindowButton( Panel parent, string icon, string classname, Action onClick )
 	{
-		//var button = parent.Clickable( "windowbutton window-nodrag", onClick );
-		//if ( classname is not null ) button.AddClass( classname );
-		//return button.Icon( icon );
-		return null;
+		var button = Clickable( parent, "windowbutton window-nodrag", onClick );
+		if ( classname is not null ) button.AddClass( classname );
+		return Icon( button, icon );
+	}
+
+	private static Panel Clickable( Panel parent, string classname, Action onClick )
+	{
+		var panel = parent.Add.Panel( classname );
+		panel.AddEventListener( "onclick", onClick );
+		return panel;
+	}
+
+	private static Sandbox.UI.Label Icon( Panel parent, string icon, string classname = null )
+	{
+		var label = parent.Add.Label( icon, "icon" );
+		if ( classname is not null ) label.AddClass( classname );
+		return label;
 	}
 
 	sealed class FloatingShortcuts : Panel
