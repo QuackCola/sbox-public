@@ -165,7 +165,7 @@ public partial class PanelDockWindow : Panel
 		_savedLayout = _dockWindows.State;
 	}
 
-	public void OnMaximize()
+	protected void OnMaximize()
 	{
 		_maximizeIcon.Text = _window.IsMaximized ? "filter_none" : "crop_square";
 	}
