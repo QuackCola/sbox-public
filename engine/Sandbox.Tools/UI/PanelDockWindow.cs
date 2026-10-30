@@ -22,19 +22,21 @@ public partial class PanelDockWindow : Panel
 	private readonly PanelWindow _window;
 
 	private PanelDockWindows _dockWindows;
-	private string _defaultLayout;
-	private string _savedLayout;
+	//private string _defaultLayout;
+	//private string _savedLayout;
 
 	private Sandbox.UI.Label _titleBarLabel;
 	private Sandbox.UI.Label _windowTitleLabel;
 	private Sandbox.UI.Label _maximizeIcon;
 
-	protected Sandbox.UI.StatusBar _statusBar { get; private set; }
+	protected Sandbox.UI.StatusBar StatusBar { get; private set; }
 
 	private readonly List<RootPanel> _floatingRoots = new();
 
-	public PanelDockWindow()
+	public PanelDockWindow( PanelWindow window ) : base()
 	{
+		_window = window;
+
 		BuildTitleBar();
 		BuildBodyInternal();
 		BuildStatusBarInternal();
@@ -76,22 +78,20 @@ public partial class PanelDockWindow : Panel
 
 	private void BuildBodyInternal()
 	{
-		var body = Add.Panel( "body" );
-
-		DockHost = body.AddChild( new DockHost() );
+		DockHost = new DockHost();
 		DockHost.AddClass( "editor-dock-workspace" );
 
 		_dockWindows = new PanelDockWindows( DockHost ) { ConfigureWindow = ConfigureFloatingWindow };
 
 		BuildBody();
+
+		var body = Add.Panel( "body" );
+		body.AddChild( DockHost );
 	}
 
 	private void BuildStatusBarInternal()
 	{
-		_statusBar = AddChild( new Sandbox.UI.StatusBar() );
-		var bar = _statusBar.Left;
-
-		bar.Add.Panel( "dot" );
+		StatusBar = AddChild( new Sandbox.UI.StatusBar() );
 
 		BuildStatusBar();
 	}
@@ -168,14 +168,14 @@ public partial class PanelDockWindow : Panel
 		_titleBarLabel.Text = text;
 	}
 
-	protected virtual bool HandleShortcut( ButtonEvent ev )
+	protected virtual bool HandleShortcut( ButtonEvent ev, Panel scope )
 	{
 		return false;
 	}
 
 	public override void OnButtonEvent( ButtonEvent ev )
 	{
-		if ( ev.Pressed && HandleShortcut( ev ) )
+		if ( ev.Pressed && HandleShortcut( ev, this ) )
 		{
 			ev.StopPropagation = true;
 			return;
@@ -213,7 +213,7 @@ public partial class PanelDockWindow : Panel
 
 		public override void OnButtonEvent( ButtonEvent ev )
 		{
-			if ( ev.Pressed && _dockWindow.IsValid && _dockWindow.HandleShortcut( ev ) )
+			if ( ev.Pressed && _dockWindow.IsValid && _dockWindow.HandleShortcut( ev, this ) )
 			{
 				ev.StopPropagation = true;
 				return;
