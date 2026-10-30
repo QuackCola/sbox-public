@@ -68,7 +68,7 @@ public partial class PanelDockWindow : Panel
 		_maximizeIcon = WindowButton( bar, "crop_square", null, () =>
 		{
 			_window.ToggleMaximized();
-			UpdateMaximizeIcon();
+			OnMaximize();
 		} );
 		WindowButton( bar, "close", "close", _window.Dispose );
 
@@ -165,7 +165,7 @@ public partial class PanelDockWindow : Panel
 		_savedLayout = _dockWindows.State;
 	}
 
-	private void UpdateMaximizeIcon()
+	public void OnMaximize()
 	{
 		_maximizeIcon.Text = _window.IsMaximized ? "filter_none" : "crop_square";
 	}
