@@ -21,17 +21,16 @@ public partial class PanelDockWindow : Panel
 
 	private readonly PanelWindow _window;
 
+	private readonly List<RootPanel> _floatingRoots = new();
 	private PanelDockWindows _dockWindows;
-	//private string _defaultLayout;
-	//private string _savedLayout;
+	private string _defaultLayout;
+	private string _savedLayout;
 
 	private Sandbox.UI.Label _titleBarLabel;
 	private Sandbox.UI.Label _windowTitleLabel;
 	private Sandbox.UI.Label _maximizeIcon;
 
 	protected Sandbox.UI.StatusBar StatusBar { get; private set; }
-
-	private readonly List<RootPanel> _floatingRoots = new();
 
 	public PanelDockWindow( PanelWindow window ) : base()
 	{
@@ -84,6 +83,9 @@ public partial class PanelDockWindow : Panel
 		_dockWindows = new PanelDockWindows( DockHost ) { ConfigureWindow = ConfigureFloatingWindow };
 
 		BuildBody();
+
+		_defaultLayout = _dockWindows.State;
+		_savedLayout = _defaultLayout;
 
 		var body = Add.Panel( "body" );
 		body.AddChild( DockHost );
@@ -150,12 +152,17 @@ public partial class PanelDockWindow : Panel
 
 	public void ResetLayout()
 	{
+		_dockWindows.RestoreState( _defaultLayout );
+	}
 
+	public void RestoreLayout()
+	{
+		_dockWindows.RestoreState( _savedLayout );
 	}
 
 	public void SaveLayout()
 	{
-
+		_savedLayout = _dockWindows.State;
 	}
 
 	private void UpdateMaximizeIcon()
