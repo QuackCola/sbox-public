@@ -70,7 +70,7 @@ public partial class PanelDockWindow : Panel
 			_window.ToggleMaximized();
 			OnMaximize();
 		} );
-		WindowButton( bar, "close", "close", _window.Dispose );
+		WindowButton( bar, "close", "close", Close );
 
 		Add.Panel( "accentline" );
 	}
@@ -189,6 +189,11 @@ public partial class PanelDockWindow : Panel
 		}
 
 		base.OnButtonEvent( ev );
+	}
+
+	public virtual void Close()
+	{
+		_window?.Dispose();
 	}
 
 	public override void OnDeleted()
