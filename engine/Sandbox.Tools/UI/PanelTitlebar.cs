@@ -57,7 +57,7 @@ public class PanelTitleBar : Panel
 		_titlebarIcon = Add.Label( "s&", "brand" );
 
 		MenuBar = AddChild<Sandbox.UI.MenuBar>( "window-nodrag" );
-	
+
 		Add.Panel( "grow" );
 
 		// Centred over the bar, so the menus on the left don't push it off centre
