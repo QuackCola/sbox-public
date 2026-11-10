@@ -58,7 +58,7 @@ public partial class EditorWindow : Panel
 	//
 	void BuildTitleBar()
 	{
-		titleBar = AddChild( new PanelTitleBar( ( bar ) => 
+		titleBar = AddChild( new PanelTitleBar( ( bar ) =>
 		{
 			var project = bar.Add.Panel( "project window-nodrag" );
 			project.Add.Label( ProjectInitial, "chip" );
@@ -67,7 +67,7 @@ public partial class EditorWindow : Panel
 			themeIcon = WindowButton( bar, "light_mode", "theme", ToggleTheme );
 		} ) );
 		titleBar.OnMinimize = Window.Minimize;
-		titleBar.OnMaximize = () => 
+		titleBar.OnMaximize = () =>
 		{
 			Window.ToggleMaximized();
 			UpdateMaximizeIcon();
