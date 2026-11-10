@@ -58,14 +58,14 @@ public partial class EditorWindow : Panel
 	//
 	void BuildTitleBar()
 	{
-		titleBar = AddChild( new PanelTitleBar( BuildMenubar, ( bar ) => 
+		titleBar = AddChild( new PanelTitleBar( ( bar ) => 
 		{
 			var project = bar.Add.Panel( "project window-nodrag" );
 			project.Add.Label( ProjectInitial, "chip" );
 			project.Add.Label( ProjectTitle, "name" );
 
 			themeIcon = WindowButton( bar, "light_mode", "theme", ToggleTheme );
-		}, true ) );
+		} ) );
 		titleBar.OnMinimize = Window.Minimize;
 		titleBar.OnMaximize = () => 
 		{
@@ -73,13 +73,8 @@ public partial class EditorWindow : Panel
 			UpdateMaximizeIcon();
 		};
 		titleBar.OnClose = () => Window.Dispose();
-		
-		UpdateTitle();
-	}
 
-	void BuildMenubar( Sandbox.UI.MenuBar menus )
-	{
-		var file = menus.AddMenu( "File" );
+		var file = titleBar.MenuBar.AddMenu( "File" );
 		Option( file, "New Scene", "Ctrl+N" );
 		Option( file, "Open Scene...", "Ctrl+O" );
 		Option( file, "Save Scene", "Ctrl+S", () => SceneEditorSession.Active?.Save( false ) );
@@ -87,7 +82,7 @@ public partial class EditorWindow : Panel
 		file.AddSeparator();
 		Option( file, "Quit", "Alt+F4", Window.Dispose );
 
-		var edit = menus.AddMenu( "Edit" );
+		var edit = titleBar.MenuBar.AddMenu( "Edit" );
 		Option( edit, "Undo", "Ctrl+Z", () => SceneEditorSession.Active?.UndoSystem.Undo() );
 		Option( edit, "Redo", "Ctrl+Y", () => SceneEditorSession.Active?.UndoSystem.Redo() );
 		edit.AddSeparator();
@@ -97,7 +92,7 @@ public partial class EditorWindow : Panel
 		edit.AddSeparator();
 		Option( edit, "Delete", "Del", () => { if ( SceneEditorSession.Active is { } session ) DeleteSelected( session ); } );
 
-		var view = menus.AddMenu( "View" );
+		var view = titleBar.MenuBar.AddMenu( "View" );
 		Option( view, "Hierarchy", action: () => ShowDock( "hierarchy" ) );
 		Option( view, "Scene", action: () => ShowDock( "scene" ) );
 		Option( view, "Inspector", action: () => ShowDock( "inspector" ) );
@@ -110,28 +105,32 @@ public partial class EditorWindow : Panel
 		view.AddSeparator();
 		Option( view, "Full Screen", "F11", () => { Window.ToggleMaximized(); UpdateMaximizeIcon(); } );
 
-		var game = menus.AddMenu( "Game" );
+		var game = titleBar.MenuBar.AddMenu( "Game" );
 		Option( game, "Play", "F5" );
 		Option( game, "Play From Here" );
 		game.AddSeparator();
 		Option( game, "Project Settings" );
 
-		var scene = menus.AddMenu( "Scene" );
+		var scene = titleBar.MenuBar.AddMenu( "Scene" );
 		Option( scene, "Create Object", null, CreateObject );
 		Option( scene, "Create Camera" );
 		Option( scene, "Create Light" );
 		scene.AddSeparator();
 		Option( scene, "Scene Settings" );
 
-		var tools = menus.AddMenu( "Tools" );
+		var tools = titleBar.MenuBar.AddMenu( "Tools" );
 		Option( tools, "Asset Browser", action: () => ShowDock( "assets" ) );
 		Option( tools, "Shader Graph" );
 		tools.AddSeparator();
 		Option( tools, "Panel UI" );
 
-		var help = menus.AddMenu( "Help" );
+		var help = titleBar.MenuBar.AddMenu( "Help" );
 		Option( help, "Documentation" );
 		Option( help, "About" );
+
+		Add.Panel( "accentline" );
+
+		UpdateTitle();
 	}
 
 	static string ProjectTitle => Project.Current?.Config?.Title ?? "No Project";

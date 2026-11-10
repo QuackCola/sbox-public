@@ -5,14 +5,15 @@ using System;
 namespace Editor;
 
 /// <summary>
-/// A titlebar. Has the standard assortment of features - icon, menubar, title and window controls.
+/// A titlebar. Has the standard assortment of features - icon, optional menubar, title and window controls.
 /// </summary>
 public class PanelTitleBar : Panel
 {
 	private readonly Sandbox.UI.Label _titlebarIcon;
 	private readonly Sandbox.UI.Label _titlebarTitle;
 	private readonly Sandbox.UI.Label _maximizeIcon;
-	private readonly Sandbox.UI.MenuBar _menubar;
+
+	public Sandbox.UI.MenuBar MenuBar { get; private init; }
 
 	public string Icon
 	{
@@ -47,24 +48,16 @@ public class PanelTitleBar : Panel
 	/// </summary>
 	public Action OnClose { get; set; }
 
-	/// <param name="onBuildMenuBar"></param>
 	/// <param name="onBuildSpecial">
 	/// Any additional items to the left of the window control buttons.
 	/// </param>
-	/// <param name="accentLine"></param>
-	public PanelTitleBar( Action<Sandbox.UI.MenuBar> onBuildMenuBar = null, Action<Sandbox.UI.Panel> onBuildSpecial = null, bool accentLine = false ) : base()
+	public PanelTitleBar( Action<Sandbox.UI.Panel> onBuildSpecial = null ) : base()
 	{
 		AddClass( "titlebar window-drag" );
 		_titlebarIcon = Add.Label( "s&", "brand" );
 
-		// Menus live in the title bar, same as the editor's
-		_menubar = new Sandbox.UI.MenuBar();
-		_menubar.AddClass( "window-nodrag" );
-
-		onBuildMenuBar?.Invoke( _menubar );
-
-		AddChild( _menubar );
-
+		MenuBar = AddChild<Sandbox.UI.MenuBar>( "window-nodrag" );
+	
 		Add.Panel( "grow" );
 
 		// Centred over the bar, so the menus on the left don't push it off centre
@@ -76,14 +69,6 @@ public class PanelTitleBar : Panel
 		WindowButton( this, "remove", null, () => OnMinimize?.Invoke() );
 		_maximizeIcon = WindowButton( this, "crop_square", null, () => OnMaximize?.Invoke() );
 		WindowButton( this, "close", "close", () => OnClose?.Invoke() );
-
-		if ( accentLine )
-			Add.Panel( "accentline" );
-	}
-
-	protected virtual void BuildMenuBar( Sandbox.UI.MenuBar menus )
-	{
-
 	}
 
 	protected Sandbox.UI.Label WindowButton( Panel parent, string icon, string classname, Action onClick )
