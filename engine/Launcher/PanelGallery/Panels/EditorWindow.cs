@@ -14,6 +14,7 @@ public partial class EditorWindow : Panel
 
 	readonly PanelWindow Window;
 
+	PanelTitleBar titleBar;
 	Hierarchy hierarchy;
 	Inspector inspector;
 
@@ -24,8 +25,6 @@ public partial class EditorWindow : Panel
 	Sandbox.UI.Label statusWarn;
 	Sandbox.UI.Label statusError;
 
-	Sandbox.UI.Label maximizeIcon;
-	Sandbox.UI.Label windowTitle;
 	Sandbox.UI.Label themeIcon;
 	bool lightMode;
 
@@ -59,14 +58,27 @@ public partial class EditorWindow : Panel
 	//
 	void BuildTitleBar()
 	{
-		var bar = Add.Panel( "titlebar window-drag" );
+		titleBar = AddChild( new PanelTitleBar( BuildMenubar, ( bar ) => 
+		{
+			var project = bar.Add.Panel( "project window-nodrag" );
+			project.Add.Label( ProjectInitial, "chip" );
+			project.Add.Label( ProjectTitle, "name" );
 
-		bar.Add.Label( "s&", "brand" );
+			themeIcon = WindowButton( bar, "light_mode", "theme", ToggleTheme );
+		}, true ) );
+		titleBar.OnMinimize = Window.Minimize;
+		titleBar.OnMaximize = () => 
+		{
+			Window.ToggleMaximized();
+			UpdateMaximizeIcon();
+		};
+		titleBar.OnClose = () => Window.Dispose();
+		
+		UpdateTitle();
+	}
 
-		// Menus live in the title bar, same as the editor's
-		var menus = bar.AddChild( new Sandbox.UI.MenuBar() );
-		menus.AddClass( "window-nodrag" );
-
+	void BuildMenubar( Sandbox.UI.MenuBar menus )
+	{
 		var file = menus.AddMenu( "File" );
 		Option( file, "New Scene", "Ctrl+N" );
 		Option( file, "Open Scene...", "Ctrl+O" );
@@ -120,30 +132,6 @@ public partial class EditorWindow : Panel
 		var help = menus.AddMenu( "Help" );
 		Option( help, "Documentation" );
 		Option( help, "About" );
-
-		bar.Add.Panel( "grow" );
-
-		// Centred over the bar, so the menus on the left don't push it off centre
-		var titleWrap = bar.Add.Panel( "titlewrap" );
-		windowTitle = titleWrap.Add.Label( "", "title" );
-
-		var project = bar.Add.Panel( "project window-nodrag" );
-		project.Add.Label( ProjectInitial, "chip" );
-		project.Add.Label( ProjectTitle, "name" );
-
-		themeIcon = WindowButton( bar, "light_mode", "theme", ToggleTheme );
-
-		WindowButton( bar, "remove", null, Window.Minimize );
-		maximizeIcon = WindowButton( bar, "crop_square", null, () =>
-		{
-			Window.ToggleMaximized();
-			UpdateMaximizeIcon();
-		} );
-		WindowButton( bar, "close", "close", Window.Dispose );
-
-		Add.Panel( "accentline" );
-
-		UpdateTitle();
 	}
 
 	static string ProjectTitle => Project.Current?.Config?.Title ?? "No Project";
@@ -158,7 +146,7 @@ public partial class EditorWindow : Panel
 		var name = session?.Scene?.Name ?? "Untitled";
 		var dirty = session?.HasUnsavedChanges == true ? "*" : "";
 
-		windowTitle.Text = $"{name}{dirty} - s&box editor";
+		titleBar.Title = $"{name}{dirty} - s&box editor";
 	}
 	Sandbox.UI.Label WindowButton( Panel parent, string icon, string classname, Action onClick )
 	{
@@ -191,7 +179,7 @@ public partial class EditorWindow : Panel
 
 	void UpdateMaximizeIcon()
 	{
-		maximizeIcon.Text = Window.IsMaximized ? "filter_none" : "crop_square";
+		titleBar.MaximizeControlIcon = Window.IsMaximized ? "filter_none" : "crop_square";
 	}
 
 	/// <summary>
